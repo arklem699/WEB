@@ -1,0 +1,7 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ data.date }}{% endblock %}
+
+{% block content %}
+    <div class="order-text">Вы записаны на {{ data.date }} в {{ data.time }}</div>
+{% endblock %}
