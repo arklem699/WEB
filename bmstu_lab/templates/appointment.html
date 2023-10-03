@@ -1,0 +1,7 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ data.date | date:"d.m.y" }}{% endblock %}
+
+{% block content %}
+    <div class="appointment-text">Вы записаны на {{ data.date | date:"d.m.y" }} в {{ data.time | date:"H:i" }}</div>
+{% endblock %}

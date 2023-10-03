@@ -5,7 +5,7 @@
 }
 
 body {
-    background-image: url("/bmstu_lab/static/img/back.jpg");
+    background-image: url("/bmstu_lab/media/back.jpg");
     background-repeat: no-repeat;
     background-position: center center;
     background-attachment: fixed;
@@ -27,7 +27,7 @@ input {
     border-radius: 5px;
 }
   
-.order-text {
+.appointment-text {
     font-size: 40px;
 }
 

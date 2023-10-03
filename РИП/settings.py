@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'bmstu_lab',
 ]
 
 MIDDLEWARE = [
@@ -75,8 +76,14 @@ WSGI_APPLICATION = 'РИП.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'med_exam',
+        'USER': 'dbuser',
+        'PASSWORD': '123',
+        'HOST': 'localhost',
+        'PORT': 5432, # Стандартный порт PostgreSQL
+        'OPTIONS': {'client_encoding': 'UTF8'},
+        'TEST_CHARSET': 'utf8',
     }
 }
 
@@ -118,6 +125,10 @@ USE_TZ = True
 STATIC_URL = '/bmstu_lab/static/'
 
 STATICFILES_DIRS = [BASE_DIR / 'bmstu_lab/static']
+
+MEDIA_ROOT = BASE_DIR / 'bmstu_lab/media'
+
+MEDIA_URL = '/bmstu_lab/media/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field

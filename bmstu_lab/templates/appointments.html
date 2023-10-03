@@ -5,14 +5,14 @@
 {% block content %}
 <div class="block_search">
     <h2>Поиск по дате:</h2><br>
-    <form action="/send" method="get" enctype="multipart/form-data">
+    <form action="/find" method="get" enctype="multipart/form-data">
         <input name="query" type="text" placeholder="ДД.ММ.ГГГГ">
         <input type="submit" class="search_button" value="Поиск" >
     </form>
 </div>
 <ul>
-    {% for order in data %}
-       {% include 'order_element.html' with element=order %}
+    {% for appointment in data %}
+       {% include 'appointment_el.html' with element=appointment %}
     {% empty %}
         <h1>На выбранную дату записи нет!</h1>
     {% endfor %}

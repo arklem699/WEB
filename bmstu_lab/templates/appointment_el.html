@@ -1,0 +1,11 @@
+<div class="block">
+    <p class="block_text">
+        <img src="{{ element.image.url }}"><br>
+        <b>Врач: {{ element.doctor }}</b><br>
+        <b>{{ element.date | date:"d.m.y" }}</b><br>
+        <b>{{ element.time | date:"H:i" }}</b><br>
+    </p>
+    <form action="/appointment/{{ element.id }}">
+        <button type="submit" class="block_button">Записаться</button>
+    </form>
+</div>
