@@ -29,6 +29,7 @@ urlpatterns = [
     path('', views.GetAppointments),
     path('appointment/<int:id>/', views.GetAppointment, name='appointment_url'),
     path('find', views.GetQuery, name='find'),
+    path('delete/<int:id>/', views.DeleteAppointment, name='delete_appoinment'),
     path('', include(router.urls)),
     path(r'appointments/', views.get_list_appointment, name='appointments-list'),
     path(r'appointments/post/', views.post_list_appoinment, name='appointments-post'),

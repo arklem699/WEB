@@ -1,14 +1,16 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, redirect, get_object_or_404
 from datetime import datetime
 from bmstu_lab.models import Appointment, Application, AppApp, Students
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.decorators import api_view
 from bmstu_lab.serializers import AppAppSerializer, ApplicationSerializer, AppointmentSerializer
+import psycopg2
 
 
 def GetAppointments(request):
-    return render(request, 'appointments.html', {'data' : Appointment.objects.all() })
+    appointments = Appointment.objects.filter(status='Действует')
+    return render(request, 'appointments.html', {'data' : appointments })
 
 
 def GetAppointment(request, id):
@@ -39,6 +41,16 @@ def GetQuery(request):
     query_date = datetime.strptime(query, '%d.%m.%Y').strftime('%Y-%m-%d')
     new_data = Appointment.objects.filter(date=query_date)
     return render(request, 'appointments.html', {'data': new_data})
+
+
+def DeleteAppointment(request, id):
+    conn = psycopg2.connect(dbname="med_exam", user="dbuser", password="123", port="5432")
+    cursor = conn.cursor()
+    cursor.execute("UPDATE appointment SET status = 'Удалён' WHERE id = %s", (id,))
+    conn.commit()   # реальное выполнение команд sql
+    cursor.close()
+    conn.close()
+    return redirect('/')
 
 
 @api_view(['Get'])
