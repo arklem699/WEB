@@ -6,15 +6,26 @@ from rest_framework import status
 from rest_framework.decorators import api_view
 from bmstu_lab.serializers import AppAppSerializer, ApplicationSerializer, AppointmentSerializer
 import psycopg2
+import base64
 
 
 def GetAppointments(request):
     appointments = Appointment.objects.filter(status='Действует')
+    for appointment in appointments:
+        if appointment.image:
+            appointment.image = base64.b64encode(appointment.image).decode()
     return render(request, 'appointments.html', {'data' : appointments })
 
 
 def GetAppointment(request, id):
+    new_students = Students.objects.create(
+        name = 'user',
+        student_group = 'group'
+    )
+    new_students.save()
+
     new_application = Application.objects.create(
+        id_user = Students.objects.latest('id'),
         date_creating = datetime.today(),
         status = 'Введён'
     )
@@ -25,13 +36,6 @@ def GetAppointment(request, id):
         id_appoint = Appointment.objects.get(id=id)
     )
     new_appapp.save()
-
-    new_students = Students.objects.create(
-        id_appl = Application.objects.latest('id'),
-        name = 'user',
-        student_group = 'group'
-    )
-    new_students.save()
 
     return render(request, 'appointment.html', {'data': Appointment.objects.get(id=id)})
 
