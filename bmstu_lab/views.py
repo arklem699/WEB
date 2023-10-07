@@ -10,7 +10,14 @@ def GetAppointments(request):
 
 
 def GetAppointment(request, id):
+    new_students = Students.objects.create(
+        name = 'user',
+        student_group = 'group'
+    )
+    new_students.save()
+
     new_application = Application.objects.create(
+        id_user = Students.objects.latest('id'),
         date_creating = datetime.today(),
         status = 'Введён'
     )
@@ -21,13 +28,6 @@ def GetAppointment(request, id):
         id_appoint = Appointment.objects.get(id=id)
     )
     new_appapp.save()
-
-    new_students = Students.objects.create(
-        id_appl = Application.objects.latest('id'),
-        name = 'user',
-        student_group = 'group'
-    )
-    new_students.save()
 
     return render(request, 'appointment.html', {'data': Appointment.objects.get(id=id)})
 
