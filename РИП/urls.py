@@ -27,4 +27,5 @@ urlpatterns = [
     path('', views.GetAppointments),
     path('appointment/<int:id>/', views.GetAppointment, name='appointment_url'),
     path('find', views.GetQuery, name='find'),
+    path('delete/<int:id>/', views.DeleteAppointment, name='delete_appoinment')
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
