@@ -41,5 +41,6 @@ urlpatterns = [
     path(r'applications/<int:id>/delete/', views.delete_detail_application, name='applications-delete'),
     path(r'applications/<int:id>/user/put/', views.put_status_user_application, name='appointments-user-put'),
     path(r'applications/<int:id>/moderator/put/', views.put_status_moderator_application, name='appointments-moderator-put'),
+    path(r'appapps/<int:id>/delete/', views.delete_appointment_from_application, name='appapps-delete'),
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

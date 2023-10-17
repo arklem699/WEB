@@ -1,10 +1,10 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from datetime import datetime
 from bmstu_lab.models import Appointment, Application, AppApp, Students
-from rest_framework.response import Response
-from rest_framework import status
-from rest_framework.decorators import api_view
 from bmstu_lab.serializers import AppAppSerializer, ApplicationSerializer, AppointmentSerializer
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.decorators import api_view
 import psycopg2
 import base64
 
@@ -150,7 +150,7 @@ def delete_detail_application(request, id, format=None):
 @api_view(['Put'])
 def put_status_user_application(request, id, format=None):
     """
-    Обновляет информацию о стаутсе создателя
+    Обновляет информацию о статусе создателя
     """
     application = get_object_or_404(Application, id=id)
     application.status = 'Удалён'
@@ -164,7 +164,7 @@ def put_status_user_application(request, id, format=None):
 @api_view(['Put'])
 def put_status_moderator_application(request, id, format=None):
     """
-    Обновляет информацию о стаутсе модератора
+    Обновляет информацию о статусе модератора
     """
     application = get_object_or_404(Application, id=id)
     serializer = ApplicationSerializer(application, data=request.data)
@@ -175,3 +175,15 @@ def put_status_moderator_application(request, id, format=None):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     return Response({'error': "Нельзя изменить статус на 'Удалён'."}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['Delete'])
+def delete_appointment_from_application(request, id, format=None):    
+    """
+    Удаляет услугу из заявки
+    """
+    appapp = get_object_or_404(AppApp, id=id)
+    appapp.delete()
+    appapps = AppApp.objects.all()
+    serializer = AppAppSerializer(appapps, many=True)
+    return Response(serializer.data)
