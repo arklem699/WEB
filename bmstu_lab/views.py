@@ -18,18 +18,15 @@ def GetAppointments(request):
 
 
 def GetAppointment(request, id):
-    new_students = Students.objects.create(
-        name = 'user',
-        student_group = 'group'
-    )
-    new_students.save()
-
-    new_application = Application.objects.create(
-        id_user = Students.objects.latest('id'),
-        date_creating = datetime.today(),
-        status = 'Введён'
-    )
-    new_application.save()
+    id_users_str = Application.objects.values_list('id_user', flat=True)
+    id_users_int = [int(id_user_str) for id_user_str in id_users_str]
+    if Students.objects.latest('id').id not in id_users_int:
+        new_application = Application.objects.create(
+            id_user = Students.objects.latest('id'),
+            date_creating = datetime.today(),
+            status = 'Введён'
+        )
+        new_application.save()
 
     new_appapp = AppApp.objects.create(
         id_appl = Application.objects.latest('id'),
@@ -90,6 +87,21 @@ def post_list_appoinment(request, format=None):
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['Post'])
+def post_appoinment_in_application(request, id, format=None):    
+    """
+    Добавляет услугу в последнюю заявку
+    """
+    print('post')
+    new_appapp = AppApp.objects.create(
+        id_appl = Application.objects.latest('id'),
+        id_appoint = Appointment.objects.get(id=id)
+    )
+    new_appapp.save()
+    serializer = AppAppSerializer(new_appapp)
+    return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 @api_view(['Put'])

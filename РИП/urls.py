@@ -33,6 +33,7 @@ urlpatterns = [
     path('', include(router.urls)),
     path(r'appointments/', views.get_list_appointment, name='appointments-list'),
     path(r'appointments/post/', views.post_list_appoinment, name='appointments-post'),
+    path(r'appointments/post/<int:id>', views.post_appoinment_in_application, name='appointments-application-post'),
     path(r'appointments/<int:id>/', views.get_detail_appointment, name='appointments-detail'),
     path(r'appointments/<int:id>/put/', views.put_detail_appointment, name='appointments-put'),
     path(r'appointments/<int:id>/delete/', views.delete_detail_appointment, name='appointments-delete'),
