@@ -1,11 +1,19 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from datetime import datetime
 from bmstu_lab.models import Appointment, Application, AppApp, Students
+from bmstu_lab.serializers import AppAppSerializer, ApplicationSerializer, AppointmentSerializer
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.decorators import api_view
 import psycopg2
+import base64
 
 
 def GetAppointments(request):
     appointments = Appointment.objects.filter(status='Действует')
+    for appointment in appointments:
+        if appointment.image:
+            appointment.image = base64.b64encode(appointment.image).decode()
     return render(request, 'appointments.html', {'data' : appointments })
 
 
