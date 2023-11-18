@@ -14,7 +14,7 @@ def GetAppointments(request):
     for appointment in appointments:
         if appointment.image:
             appointment.image = base64.b64encode(appointment.image).decode()
-    return render(request, 'appointments.html', {'data' : appointments })
+    return render(request, 'appointments.html', {'data' : appointments})
 
 
 def GetAppointment(request, id):
@@ -28,19 +28,26 @@ def GetAppointment(request, id):
         )
         new_application.save()
 
-    new_appapp = AppApp.objects.create(
+    new_appapp, created = AppApp.objects.get_or_create(
         id_appl = Application.objects.latest('id'),
         id_appoint = Appointment.objects.get(id=id)
     )
-    new_appapp.save()
+    if created:
+        new_appapp.save()
 
     return render(request, 'appointment.html', {'data': Appointment.objects.get(id=id)})
 
 
 def GetQuery(request):
     query = request.GET.get('query', '')
-    query_date = datetime.strptime(query, '%d.%m.%Y').strftime('%Y-%m-%d')
-    new_data = Appointment.objects.filter(date=query_date)
+    if query != '':
+        query_date = datetime.strptime(query, '%d.%m.%Y').strftime('%Y-%m-%d')
+        new_data = Appointment.objects.filter(date=query_date)
+    else:
+        new_data = Appointment.objects.all()
+    for appointment in new_data:
+        if appointment.image:
+            appointment.image = base64.b64encode(appointment.image).decode()
     return render(request, 'appointments.html', {'data': new_data})
 
 
@@ -52,6 +59,21 @@ def DeleteAppointment(request, id):
     cursor.close()
     conn.close()
     return redirect('/')
+
+
+@api_view(['Get'])
+def get_search_appointment(request, format=None):
+    """
+    Возвращает список услуг по запросу
+    """
+    query = request.GET.get('query', '')
+    if query != '':
+        query_date = datetime.strptime(query, '%d.%m.%Y').strftime('%Y-%m-%d')
+        new_data = Appointment.objects.filter(date=query_date)
+    else:
+        new_data = Appointment.objects.all()
+    serializer = AppointmentSerializer(new_data, many=True)
+    return Response(serializer.data)
 
 
 @api_view(['Get'])
@@ -105,6 +127,17 @@ def detail_appointment(request, id, format=None):
         """
         appointment.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@api_view(['GET'])
+def get_image_appointment(request, id, format=None):
+    """
+    Возвращает картинку из услуги
+    """
+    appointment = Appointment.objects.get(id=id)
+    if appointment.image:
+        appointment.image = base64.b64encode(appointment.image).decode()
+    return Response(appointment.image, content_type="image/jpg")
 
 
 @api_view(['Post'])
