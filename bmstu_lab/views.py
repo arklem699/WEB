@@ -24,7 +24,7 @@ def GetAppointment(request, id):
         new_application = Application.objects.create(
             id_user = Students.objects.latest('id'),
             date_creating = datetime.today(),
-            status = 'Введён'
+            status = 'Черновик'
         )
         new_application.save()
 
