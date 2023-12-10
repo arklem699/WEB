@@ -1,46 +1,51 @@
-"""
-URL configuration for РИП project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/4.2/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
-
 from django.contrib import admin
 from django.urls import path, include
-from bmstu_lab import views
 from django.conf import settings
 from django.conf.urls.static import static
-from rest_framework import routers
+from drf_yasg.views import get_schema_view
+from drf_yasg import openapi
+from rest_framework import routers, permissions
+from bmstu_lab import views
 
 router = routers.DefaultRouter()
+router.register(r'user', views.UserViewSet, basename='user')
+
+schema_view = get_schema_view(
+   openapi.Info(
+      title="Snippets API",
+      default_version='v1',
+      description="Test description",
+      terms_of_service="https://www.google.com/policies/terms/",
+      contact=openapi.Contact(email="contact@snippets.local"),
+      license=openapi.License(name="BSD License"),
+   ),
+   public=True,
+   permission_classes=(permissions.AllowAny,),
+)
 
 urlpatterns = [
+    
     path('admin/', admin.site.urls),
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
-    path('', views.GetAppointments),
-    path('appointment/<int:id>/', views.GetAppointment, name='appointment_url'),
-    path('find/', views.GetQuery, name='search'),
-    path('delete/<int:id>/', views.DeleteAppointment, name='delete_appoinment'),
+    path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('', include(router.urls)),
 
     path('search/', views.get_search_appointment, name='appointments-search-list'),
+
     path('appointments/', views.get_list_appointment, name='appointments-list'),
-    path('appointments/post/', views.post_list_appoinment, name='appointments-post'),
+    path('appointments/post/', views.post_list_appointment, name='appointments-post'),
     path('appointment/<int:id>/', views.detail_appointment, name='appointment-detail'),
-    path('appointment/<int:id>/image', views.get_image_appointment, name='appointment-image'),
+    path('appointment/<int:id>/image/', views.get_image_appointment, name='appointment-image'),
+
     path('applications/', views.get_list_application, name='applications-list'),
     path('application/<int:id>/', views.detail_application, name='application-detail'),
     path('application/<int:id>/user/put/', views.put_status_user_application, name='appointments-user-put'),
     path('application/<int:id>/moderator/put/', views.put_status_moderator_application, name='appointments-moderator-put'),
+
     path('appapp/<int:id>/', views.delete_appointment_from_application, name='appapps-delete'),
+
+    path('login/',  views.login_view, name='login'),
+    path('logout/', views.logout_view, name='logout'),
+    path('reg/',  views.register, name='reg'),
+
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
