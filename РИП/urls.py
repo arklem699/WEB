@@ -35,10 +35,13 @@ urlpatterns = [
     path('appointments/', views.get_list_appointment, name='appointments-list'),
     path('appointments/post/', views.post_list_appointment, name='appointments-post'),
     path('appointment/<int:id>/', views.detail_appointment, name='appointment-detail'),
-    path('appointment/<int:id>/image/', views.get_image_appointment, name='appointment-image'),
+    path('appointment/<int:id>/update/', views.update_appointment, name='appointment-update'),
+    path('appointment/<int:id>/image/get/', views.get_image_appointment, name='appointment-image-get'),
+    path('appointment/<int:id>/image/add/', views.add_image_appointment, name='appointment-image-add'),
 
     path('applications/', views.get_list_application, name='applications-list'),
     path('application/<int:id>/', views.detail_application, name='application-detail'),
+    path('application/<int:id>/delete/', views.delete_application, name='application-delete'),
     path('application/<int:id>/user/put/', views.put_status_user_application, name='appointments-user-put'),
     path('application/<int:id>/moderator/put/', views.put_status_moderator_application, name='appointments-moderator-put'),
 
