@@ -2,6 +2,7 @@ from django.conf import settings
 from django.contrib.auth import authenticate, login, logout  
 from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
+from django.db.models import Q
 from django.http import HttpResponse
 from drf_yasg.utils import swagger_auto_schema
 from datetime import datetime
@@ -12,6 +13,7 @@ from rest_framework import status, viewsets
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
+from datetime import datetime
 import base64
 import redis
 import uuid
@@ -42,6 +44,9 @@ class UserViewSet(viewsets.ModelViewSet):
 @permission_classes([AllowAny])
 @authentication_classes([])
 def register(request):
+    """
+    Регистрация пользователя
+    """
     serializer = UserSerializer(data=request.data)
     if not serializer.is_valid():
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -62,13 +67,15 @@ def register(request):
 @permission_classes([AllowAny])
 @authentication_classes([])
 def login_view(request):
+    """
+    Авторизация пользователя
+    """
     username = request.POST["email"] 
     password = request.POST["password"]
     user = authenticate(request=request, email=username, password=password)
     if user is not None:
         login(request, user)
         user_id = CustomUser.objects.get(email=username).id
-        # Ваш код успешной аутентификации
         random_key = uuid.uuid4()
         session_storage.set(str(random_key), user_id)
         response = HttpResponse("{'status': 'ok'}")
@@ -78,8 +85,12 @@ def login_view(request):
         return HttpResponse("{'status': 'error', 'error': 'login failed'}")
 
 
+@api_view(['POST'])
 def logout_view(request):
-    logout(request._request)
+    """
+    Выход из профиля
+    """
+    logout(request)
     return Response({'status': 'Success'})
 
 
@@ -110,7 +121,7 @@ def get_list_appointment(request, format=None):
 
 @swagger_auto_schema(method='post', request_body=AppointmentSerializer)
 @api_view(['POST'])
-@permission_classes([IsAdmin])
+@permission_classes([IsAdmin | IsManager])
 def post_list_appointment(request, format=None):    
     """
     Добавляет новую услугу
@@ -122,14 +133,14 @@ def post_list_appointment(request, format=None):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@swagger_auto_schema(method='post', request_body=AppointmentSerializer)
+@swagger_auto_schema(method='post', request_body=AppointmentSerializer) 
 @api_view(['GET', 'POST'])
 def detail_appointment(request, id, format=None):
-    appointment = get_object_or_404(Appointment, id=id)
     if request.method == 'GET':
         """
         Возвращает информацию об услуге
         """
+        appointment = get_object_or_404(Appointment, id=id)
         serializer = AppointmentSerializer(appointment)
         return Response(serializer.data)   
     
@@ -165,7 +176,8 @@ def detail_appointment(request, id, format=None):
     
 @swagger_auto_schema(method='put', request_body=AppointmentSerializer)
 @api_view(['PUT', 'DELETE'])
-def detail_appointment(request, id, format=None):
+@permission_classes([IsAdmin | IsManager])
+def update_appointment(request, id, format=None):              
     appointment = get_object_or_404(Appointment, id=id)
 
     if request.method == 'PUT':
@@ -197,6 +209,27 @@ def get_image_appointment(request, id, format=None):
     return Response(appointment.image, content_type="image/jpg")
 
 
+@swagger_auto_schema(method='put', request_body=AppointmentSerializer)
+@api_view(['PUT'])
+@permission_classes([IsAdmin | IsManager])
+def add_image_appointment(request, id, format=None):
+    """
+    Добавляет изображение в услугу
+    """
+    appointment = Appointment.objects.get(id=id)
+
+    if 'image' in request.data:
+        image_file = request.data['image']
+        image_data = base64.b64encode(image_file.read())
+        appointment.image = image_data
+        appointment.save()
+
+        return Response({'message': 'Изображение успешно добавлено'}, status=status.HTTP_201_CREATED)
+
+    else:
+        return Response({'error': 'Поле "image" отсутствует в запросе'}, status=status.HTTP_400_BAD_REQUEST)
+
+
 @api_view(['GET'])
 def get_list_application(request, format=None):
     """
@@ -210,13 +243,15 @@ def get_list_application(request, format=None):
         if user_id is not None:
             user = CustomUser.objects.get(id=user_id)
 
+            # Все заявки для админов
             if user.is_staff or user.is_superuser:
-                applications = Application.objects.all()
+                applications = Application.objects.exclude(Q(status='Черновик') | Q(status='Удалён'))
                 serializer = ApplicationSerializer(applications, many=True)
                 return Response(serializer.data)
             
+            # Собственные заявки для пользователя
             elif Application.objects.filter(id_user=user_id).exists():
-                applications = Application.objects.filter(id_user=user_id)
+                applications = Application.objects.filter(Q(id_user=user_id) & ~(Q(status='Черновик') | Q(status='Удалён')))
                 serializer = ApplicationSerializer(applications, many=True)
                 return Response(serializer.data)
             
@@ -230,55 +265,132 @@ def get_list_application(request, format=None):
         return Response(status=status.HTTP_403_FORBIDDEN)
 
 
-@api_view(['GET', 'DELETE'])
+@api_view(['GET'])
 def detail_application(request, id, format=None):
-    application = get_object_or_404(Application, id=id)
-    if request.method == 'GET':
-        """
-        Возвращает информацию о заявке
-        """
-        serializer = ApplicationSerializer(application)
-        return Response(serializer.data)
+    """
+    Возвращает информацию о заявке
+    """
+    ssid = request.COOKIES.get("session_id")
+
+    if ssid is not None:
+        user_id = session_storage.get(ssid)
+
+        if user_id is not None:
+
+            applications = Application.objects.filter(Q(id_user=user_id) & ~(Q(status='Черновик') | Q(status='Удалён')))
+            application = get_object_or_404(applications, id=id)
+            appapps = AppApp.objects.filter(id_appl=id)
+            appointments = []
+
+            for appapp in appapps:
+                appointments.append(Appointment.objects.get(id=appapp.id_appoint.id))
+
+            serializer_appl = ApplicationSerializer(application)
+            serializer_appoint = AppointmentSerializer(appointments, many=True)
+            response_data = {'Заявка': serializer_appl.data, 'Услуги': serializer_appoint.data}
+
+            return Response(response_data)
+        
+        else:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
     
-    elif request.method == 'DELETE':    
-        """
-        Удаляет информацию о заявке
-        """
-        application.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+    else:
+        return Response(status=status.HTTP_403_FORBIDDEN)
+    
+
+@api_view(['DELETE'])
+def delete_application(request, id, format=None):    
+    """
+    Удаляет информацию о заявке
+    """
+    ssid = request.COOKIES.get("session_id")
+
+    if ssid is not None:
+        user_id = session_storage.get(ssid)
+
+        if user_id is not None:
+
+            applications = Application.objects.filter(Q(id_user=user_id) & Q(status='Черновик'))
+            application = get_object_or_404(applications, id=id)
+            application.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        
+        else:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+    
+    else:
+        return Response(status=status.HTTP_403_FORBIDDEN)
 
 
 @swagger_auto_schema(method='put', request_body=ApplicationSerializer)
 @api_view(['PUT'])
 def put_status_user_application(request, id, format=None):
     """
-    Обновляет информацию о статусе создателя
+    Формирование заявки создателем
     """
-    application = get_object_or_404(Application, id=id)
-    application.status = 'Удалён'
-    serializer = ApplicationSerializer(application, data=request.data)
-    if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    ssid = request.COOKIES.get("session_id")
+
+    if ssid is not None:
+        user_id = session_storage.get(ssid)
+
+        if user_id is not None:
+
+            applications = Application.objects.filter(Q(id_user=user_id) & Q(status='Черновик'))
+            application = get_object_or_404(applications, id=id)
+            application.status = 'Сформирована'
+            application.save()
+            serializer = ApplicationSerializer(application)
+            return Response(serializer.data)
+            
+        else:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+    
+    else:
+        return Response(status=status.HTTP_403_FORBIDDEN)
 
 
 @swagger_auto_schema(method='put', request_body=ApplicationSerializer)
 @api_view(['PUT'])
-@permission_classes((IsAdmin,))
+@permission_classes([IsAdmin | IsManager])
 def put_status_moderator_application(request, id, format=None):
     """
-    Обновляет информацию о статусе модератора
+    Одобрение или отклонение заявки модератором
     """
-    application = get_object_or_404(Application, id=id)
-    serializer = ApplicationSerializer(application, data=request.data)
-    new_status = request.data.get('status')
-    if new_status != 'Удалён':
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    return Response({'error': "Нельзя изменить статус на 'Удалён'."}, status=status.HTTP_403_FORBIDDEN)
+    ssid = request.COOKIES.get("session_id")
+    print(ssid)
+    if ssid is not None:
+        user_id = session_storage.get(ssid)
+        print(user_id)
+
+        if user_id is not None:
+            user = CustomUser.objects.get(id=user_id)
+            application = get_object_or_404(Application, id=id)
+
+            if application.status == 'Сформирована':
+                serializer = ApplicationSerializer(application, data=request.data)
+                new_status = request.data.get('status')
+
+                if new_status in ('Одобрена', 'Отклонена'):
+                    print(2)
+                    application.date_completion = datetime.now().strftime("%Y-%m-%d")
+                    application.moderator = user.username
+                    application.save()
+                    serializer = ApplicationSerializer(application)
+                    return Response(serializer.data)
+                    
+                else:
+                    error_message = "Неправильный статус. Допустимые значения: 'Одобрена', 'Отклонена'."
+                    return Response({'error': error_message}, status=status.HTTP_400_BAD_REQUEST)
+                
+            else:
+                error_message = "Нельзя сменить статус у этой заявки."
+                return Response({'error': error_message}, status=status.HTTP_400_BAD_REQUEST)
+            
+        else:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+    
+    else:
+        return Response(status=status.HTTP_403_FORBIDDEN)
 
 
 @api_view(['DELETE'])
@@ -286,8 +398,21 @@ def delete_appointment_from_application(request, id, format=None):
     """
     Удаляет услугу из заявки
     """
-    appapp = get_object_or_404(AppApp, id=id)
-    appapp.delete()
-    appapps = AppApp.objects.all()
-    serializer = AppAppSerializer(appapps, many=True)
-    return Response(serializer.data)
+    ssid = request.COOKIES.get("session_id")
+
+    if ssid is not None:
+        user_id = session_storage.get(ssid)
+
+        if user_id is not None:
+
+            appapps = AppApp.objects.filter(id_appl__id_user=user_id)
+            appapp = get_object_or_404(appapps, id=id)
+            appapp.delete()
+
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        
+        else:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+    
+    else:
+        return Response(status=status.HTTP_403_FORBIDDEN)
