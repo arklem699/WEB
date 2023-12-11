@@ -140,6 +140,25 @@ def get_image_appointment(request, id, format=None):
     return Response(appointment.image, content_type="image/jpg")
 
 
+@api_view(['PUT'])
+def add_image_appointment(request, id, format=None):
+    """
+    Добавляет изображение в услугу
+    """
+    appointment = Appointment.objects.get(id=id)
+
+    if 'image' in request.data:
+        image_file = request.data['image']
+        image_data = base64.b64encode(image_file.read())
+        appointment.image = image_data
+        appointment.save()
+
+        return Response({'message': 'Изображение успешно добавлено'}, status=status.HTTP_201_CREATED)
+
+    else:
+        return Response({'error': 'Поле "image" отсутствует в запросе'}, status=status.HTTP_400_BAD_REQUEST)
+
+
 @api_view(['Post'])
 def post_list_appoinment(request, format=None):    
     """
