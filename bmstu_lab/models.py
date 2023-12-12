@@ -29,7 +29,7 @@ class Appointment(models.Model):
     time = models.TimeField(blank=True, null=True)
     doctor = models.CharField(max_length=50, blank=True, null=True)
     status = models.CharField(max_length=50, blank=True, null=True)
-    image = models.BinaryField(blank=True, null=True)
+    image = models.CharField(blank=True, null=True)
 
     class Meta:
         managed = True
