@@ -204,9 +204,8 @@ def get_image_appointment(request, id, format=None):
     Возвращает картинку из услуги
     """
     appointment = Appointment.objects.get(id=id)
-    if appointment.image:
-        appointment.image = base64.b64encode(appointment.image).decode()
-    return Response(appointment.image, content_type="image/jpg")
+
+    return Response(appointment.image[2:-1])
 
 
 @swagger_auto_schema(method='put', request_body=AppointmentSerializer)
@@ -224,10 +223,10 @@ def add_image_appointment(request, id, format=None):
         appointment.image = image_data
         appointment.save()
 
-        return Response({'message': 'Изображение успешно добавлено'}, status=status.HTTP_201_CREATED)
+        return Response({ 'message': 'Изображение успешно добавлено' }, status=status.HTTP_201_CREATED)
 
     else:
-        return Response({'error': 'Поле "image" отсутствует в запросе'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({ 'error': 'Поле "image" отсутствует в запросе' }, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['GET'])
@@ -357,10 +356,8 @@ def put_status_moderator_application(request, id, format=None):
     Одобрение или отклонение заявки модератором
     """
     ssid = request.COOKIES.get("session_id")
-    print(ssid)
     if ssid is not None:
         user_id = session_storage.get(ssid)
-        print(user_id)
 
         if user_id is not None:
             user = CustomUser.objects.get(id=user_id)
@@ -371,7 +368,6 @@ def put_status_moderator_application(request, id, format=None):
                 new_status = request.data.get('status')
 
                 if new_status in ('Одобрена', 'Отклонена'):
-                    print(2)
                     application.date_completion = datetime.now().strftime("%Y-%m-%d")
                     application.moderator = user.username
                     application.save()
