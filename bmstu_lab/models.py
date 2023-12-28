@@ -18,6 +18,7 @@ class Application(models.Model):
     date_completion = models.DateField(blank=True, null=True)
     moderator = models.CharField(max_length=50, blank=True, null=True)
     status = models.CharField(max_length=50, blank=True, null=True)
+    was = models.BooleanField(default=False, verbose_name="Был ли на приёме?")
 
     class Meta:
         managed = True

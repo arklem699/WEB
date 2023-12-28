@@ -42,8 +42,9 @@ urlpatterns = [
     path('applications/', views.get_list_application, name='applications-list'),
     path('application/<int:id>/', views.detail_application, name='application-detail'),
     path('application/<int:id>/delete/', views.delete_application, name='application-delete'),
-    path('application/<int:id>/user/put/', views.put_status_user_application, name='appointments-user-put'),
-    path('application/<int:id>/moderator/put/', views.put_status_moderator_application, name='appointments-moderator-put'),
+    path('application/<int:id>/user/put/', views.put_status_user_application, name='applications-user-put'),
+    path('application/<int:id>/moderator/put/', views.put_status_moderator_application, name='applications-moderator-put'),
+    path('application/<int:id>/async/put/', views.put_async_was_application, name='applications-async-put'),
 
     path('appapp/<int:id>/', views.delete_appointment_from_application, name='appapps-delete'),
 
