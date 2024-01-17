@@ -3,7 +3,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Q
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from drf_yasg.utils import swagger_auto_schema
 from datetime import datetime
 from bmstu_lab.models import Appointment, Application, AppApp, CustomUser
@@ -48,6 +48,7 @@ def register(request):
     Регистрация пользователя
     """
     serializer = UserSerializer(data=request.data)
+    print(serializer)
     if not serializer.is_valid():
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
@@ -70,19 +71,24 @@ def login_view(request):
     """
     Авторизация пользователя
     """
-    username = request.POST["email"] 
-    password = request.POST["password"]
+    username = request.data.get("email") 
+    password = request.data.get("password")
     user = authenticate(request=request, email=username, password=password)
     if user is not None:
         login(request, user)
-        user_id = CustomUser.objects.get(email=username).id
+        user_id = user.id
         random_key = uuid.uuid4()
         session_storage.set(str(random_key), user_id)
-        response = HttpResponse("{'status': 'ok'}")
-        response.set_cookie("session_id", random_key)
+        response_data = {
+            'id': user.id,
+            'username': user.username,
+            'email': user.email,
+        }
+        response = JsonResponse(response_data)
+        response.set_cookie("session_id", random_key, httponly=True, samesite='None', secure=True, path='/')
         return response
     else:
-        return HttpResponse("{'status': 'error', 'error': 'login failed'}")
+        return HttpResponse("{'status': 'error', 'error': 'login failed'}", status=401)
 
 
 @api_view(['POST'])
@@ -146,7 +152,7 @@ def detail_appointment(request, id, format=None):
     
     elif request.method == 'POST':    
         """
-        Добавляет услугу в последнюю заявку
+        Добавляет услугу в заявку-черновик
         """
         ssid = request.COOKIES.get("session_id")
 
@@ -154,8 +160,18 @@ def detail_appointment(request, id, format=None):
             user_id = session_storage.get(ssid)
 
             if user_id is not None:
+                application = Application.objects.filter(Q(id_user=user_id) & Q(status='Черновик')).first()
+
+                if application is None:
+                    application = Application.objects.create(
+                    id_user = CustomUser.objects.get(id=user_id),
+                    status = 'Черновик',
+                    date_creating = datetime.now().strftime("%Y-%m-%d")
+                    )
+                    application.save()
+                    
                 new_appapp, created = AppApp.objects.get_or_create(
-                    id_appl = Application.objects.filter(id_user=user_id).latest('id'),
+                    id_appl = application,
                     id_appoint = Appointment.objects.get(id=id)
                 )
                 serializer = AppAppSerializer(new_appapp)
@@ -250,7 +266,7 @@ def get_list_application(request, format=None):
             
             # Собственные заявки для пользователя
             elif Application.objects.filter(id_user=user_id).exists():
-                applications = Application.objects.filter(Q(id_user=user_id) & ~(Q(status='Черновик') | Q(status='Удалён')))
+                applications = Application.objects.filter(Q(id_user=user_id) & ~Q(status='Удалён'))
                 serializer = ApplicationSerializer(applications, many=True)
                 return Response(serializer.data)
             
@@ -337,6 +353,7 @@ def put_status_user_application(request, id, format=None):
             applications = Application.objects.filter(Q(id_user=user_id) & Q(status='Черновик'))
             application = get_object_or_404(applications, id=id)
             application.status = 'Сформирована'
+            application.date_formation = datetime.now().strftime("%Y-%m-%d")
             application.save()
             serializer = ApplicationSerializer(application)
             return Response(serializer.data)
@@ -420,8 +437,8 @@ def delete_appointment_from_application(request, id, format=None):
 
         if user_id is not None:
 
-            appapps = AppApp.objects.filter(id_appl__id_user=user_id)
-            appapp = get_object_or_404(appapps, id=id)
+            appapps = AppApp.objects.filter(id_appl__id_user=user_id, id_appl__status='Черновик')
+            appapp = get_object_or_404(appapps, id_appoint=id)
             appapp.delete()
 
             return Response(status=status.HTTP_204_NO_CONTENT)
@@ -429,5 +446,39 @@ def delete_appointment_from_application(request, id, format=None):
         else:
             return Response(status=status.HTTP_401_UNAUTHORIZED)
     
+    else:
+        return Response(status=status.HTTP_403_FORBIDDEN)
+    
+
+@api_view(['GET'])
+def get_shopping_cart(request, format=None):
+    """
+    Возвращает заявку в корзине
+    """
+    ssid = request.COOKIES.get("session_id")
+
+    if ssid is not None:
+        user_id = session_storage.get(ssid)
+
+        if user_id is not None:
+            user = CustomUser.objects.get(id=user_id)
+            applications = Application.objects.filter(Q(id_user=user_id) & Q(status='Черновик'))
+            app_apps = AppApp.objects.filter(id_appl__in=applications.values('id'))
+            data = [
+                {
+                    'id': app_app.id_appoint.id,
+                    'date': app_app.id_appoint.date,
+                    'time': app_app.id_appoint.time,
+                    'doctor': app_app.id_appoint.doctor,
+                    'status': app_app.id_appoint.status,
+                    'id_appl': app_app.id_appl.id
+                }
+                for app_app in app_apps
+            ]
+            return Response(data)
+    
+        else:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+
     else:
         return Response(status=status.HTTP_403_FORBIDDEN)
