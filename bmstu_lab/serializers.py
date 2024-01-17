@@ -47,7 +47,7 @@ class UserSerializer(serializers.ModelSerializer):
     is_superuser = serializers.BooleanField(default=False, required=False)
     class Meta:
         model = CustomUser
-        fields = ['email', 'password', 'is_staff', 'is_superuser']
+        fields = ['email', 'username', 'password', 'is_staff', 'is_superuser']
 
         def get_fields(self):
             new_fields = OrderedDict()
@@ -61,7 +61,8 @@ class UserSerializer(serializers.ModelSerializer):
         is_superuser = validated_data.pop('is_superuser', False)
 
         user = CustomUser.objects.create(
-            email = validated_data['email']
+            email = validated_data['email'],
+            username = validated_data['username']
         )
 
         user.set_password(validated_data['password'])

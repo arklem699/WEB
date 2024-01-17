@@ -32,6 +32,8 @@ urlpatterns = [
 
     path('search/', views.get_search_appointment, name='appointments-search-list'),
 
+    path('shopcart/', views.get_shopping_cart, name='shopping-cart'),
+
     path('appointments/', views.get_list_appointment, name='appointments-list'),
     path('appointments/post/', views.post_list_appointment, name='appointments-post'),
     path('appointment/<int:id>/', views.detail_appointment, name='appointment-detail'),
