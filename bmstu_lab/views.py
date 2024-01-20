@@ -43,7 +43,7 @@ def DeleteAppointment(request, id):
     conn = psycopg2.connect(dbname="med_exam", user="dbuser", password="123", port="5432")
     cursor = conn.cursor()
     cursor.execute("UPDATE appointment SET status = 'Удалён' WHERE id = %s", (id,))
-    conn.commit()   # реальное выполнение команд sql
+    conn.commit()   
     cursor.close()
     conn.close()
     return redirect('/')
