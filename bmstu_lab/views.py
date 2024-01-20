@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect
 from datetime import datetime
-from bmstu_lab.models import Appointment, Application, AppApp, Students
+from bmstu_lab.models import Appointment, Application, AppApp, CustomUser
 import psycopg2
 
 
@@ -10,16 +10,11 @@ def GetAppointments(request):
 
 
 def GetAppointment(request, id):
-    new_students = Students.objects.create(
-        name = 'user',
-        student_group = 'group'
-    )
-    new_students.save()
 
     new_application = Application.objects.create(
-        id_user = Students.objects.latest('id'),
+        id_user = CustomUser.objects.latest('id'),
         date_creating = datetime.today(),
-        status = 'Введён'
+        status = 'Черновик'
     )
     new_application.save()
 
