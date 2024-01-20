@@ -11,8 +11,8 @@
     </form>
 </div>
 <ul>
-    {% for order in data %}
-       {% include 'appointment_el.html' with element=order %}
+    {% for appointment in data %}
+       {% include 'appointment_el.html' with element=appointment %}
     {% empty %}
         <h1>На выбранную дату записи нет!</h1>
     {% endfor %}
