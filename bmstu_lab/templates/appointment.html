@@ -3,5 +3,16 @@
 {% block title %}{{ data.date | date:"d.m.y" }}{% endblock %}
 
 {% block content %}
-    <div class="appointment-text">Вы записаны на {{ data.date | date:"d.m.y" }} в {{ data.time | date:"H:i" }}</div>
+        <div class="information">
+            <b>Информация о записи</b>
+        </div>
+        <div class="order-container">
+            <div class="order-text">
+                <span class="label">Врач:</span> {{ data.doctor }}
+                <br>
+                <span class="label">Дата:</span> {{ data.date }}
+                <br>
+                <span class="label">Время:</span> {{ data.time }}
+            </div>
+        </div>
 {% endblock %}
