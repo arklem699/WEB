@@ -83,6 +83,8 @@ def login_view(request):
             'id': user.id,
             'username': user.username,
             'email': user.email,
+            'is_staff': user.is_staff,
+            'is_admin': user.is_superuser
         }
         response = JsonResponse(response_data)
         response.set_cookie("session_id", random_key, httponly=True, samesite='None', secure=True, path='/')
@@ -193,7 +195,8 @@ def detail_appointment(request, id, format=None):
 @swagger_auto_schema(method='put', request_body=AppointmentSerializer)
 @api_view(['PUT', 'DELETE'])
 @permission_classes([IsAdmin | IsManager])
-def update_appointment(request, id, format=None):              
+def update_appointment(request, id, format=None):
+             
     appointment = get_object_or_404(Appointment, id=id)
 
     if request.method == 'PUT':
@@ -221,7 +224,10 @@ def get_image_appointment(request, id, format=None):
     """
     appointment = Appointment.objects.get(id=id)
 
-    return Response(appointment.image[2:-1])
+    if appointment.image:
+        return Response(appointment.image[2:-1])
+    
+    return Response({ 'error': 'Поле "image" отсутствует в запросе' })
 
 
 @swagger_auto_schema(method='put', request_body=AppointmentSerializer)
@@ -261,8 +267,17 @@ def get_list_application(request, format=None):
             # Все заявки для админов
             if user.is_staff or user.is_superuser:
                 applications = Application.objects.exclude(Q(status='Черновик') | Q(status='Удалён'))
-                serializer = ApplicationSerializer(applications, many=True)
-                return Response(serializer.data)
+                data = [
+                {
+                    'id': application.id,
+                    'date_creating': application.date_creating,
+                    'date_formation': application.date_formation,
+                    'status': application.status,
+                    'username': application.id_user.username
+                }
+                for application in applications
+            ]
+                return Response(data)
             
             # Собственные заявки для пользователя
             elif Application.objects.filter(id_user=user_id).exists():
@@ -387,6 +402,7 @@ def put_status_moderator_application(request, id, format=None):
                 if new_status in ('Одобрена', 'Отклонена'):
                     application.date_completion = datetime.now().strftime("%Y-%m-%d")
                     application.moderator = user.username
+                    application.status = new_status
                     application.save()
                     serializer = ApplicationSerializer(application)
                     return Response(serializer.data)
@@ -419,7 +435,6 @@ def put_async_was_application(request, id, format=None):
     
     application = Application.objects.get(id=id)
     application.was = request.data.get('was')
-    print(application.was)
     application.save()
     serializer = ApplicationSerializer(application)
     return Response(serializer.data)
