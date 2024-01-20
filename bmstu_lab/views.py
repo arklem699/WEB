@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from datetime import datetime
-from bmstu_lab.models import Appointment, Application, AppApp, Students
+from bmstu_lab.models import Appointment, Application, AppApp, CustomUser
 from bmstu_lab.serializers import AppAppSerializer, ApplicationSerializer, AppointmentSerializer
 from rest_framework import status
 from rest_framework.response import Response
@@ -20,9 +20,9 @@ def GetAppointments(request):
 def GetAppointment(request, id):
     id_users_str = Application.objects.values_list('id_user', flat=True)
     id_users_int = [int(id_user_str) for id_user_str in id_users_str]
-    if Students.objects.latest('id').id not in id_users_int:
+    if CustomUser.objects.latest('id').id not in id_users_int:
         new_application = Application.objects.create(
-            id_user = Students.objects.latest('id'),
+            id_user = CustomUser.objects.latest('id'),
             date_creating = datetime.today(),
             status = 'Черновик'
         )
