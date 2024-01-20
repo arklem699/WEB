@@ -1,11 +1,11 @@
 <div class="block">
     <p class="block_text">
         <img src="bmstu_lab/static/img/{{ element.id }}.jpg"><br>
-        <b>Врач: {{ element.name }}</b><br>
+        <b>Врач: {{ element.doctor }}</b><br>
         <b>{{ element.date }}</b><br>
         <b>{{ element.time }}</b><br>
     </p>
-    <form action="/order/{{ element.id }}">
-        <button type="submit" class="block_button">Записаться</button>
+    <form action="/appointment/{{ element.id }}">
+        <button type="submit" class="block_button">Подробнее</button>
     </form>
 </div>

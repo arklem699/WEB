@@ -26,10 +26,6 @@ input {
     padding: 5px;
     border-radius: 5px;
 }
-  
-.order-text {
-    font-size: 40px;
-}
 
 .block {
     border: 10px solid #025f8a;
@@ -64,4 +60,28 @@ input {
 
 .search_button {
     cursor: pointer;
+}
+
+.order-container {
+    max-width: 300px; 
+    margin: 20px auto;
+    background-color: #f9f9f9;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  }
+  
+.order-text {
+    font-size: 20px;
+    line-height: 1.6;
+  }
+  
+.label {
+    font-weight: bold;
+    color: #333;
+  }
+  
+.information {
+    font-size: 30px;
+    padding: 15px;
 }
