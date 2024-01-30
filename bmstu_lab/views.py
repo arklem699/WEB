@@ -48,7 +48,6 @@ def register(request):
     Регистрация пользователя
     """
     serializer = UserSerializer(data=request.data)
-    print(serializer)
     if not serializer.is_valid():
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
@@ -492,24 +491,6 @@ def put_status_moderator_application(request, id, format=None):
     
     else:
         return Response(status=status.HTTP_403_FORBIDDEN)
-    
-
-@swagger_auto_schema(method='put', request_body=ApplicationSerializer)
-@permission_classes([AllowAny])
-@api_view(['PUT'])
-def put_async_was_application(request, id, format=None):
-    """
-    Обновление поля was асинхронным сервером
-    """
-    const_token = 'access_token'
-    if const_token != request.data.get('token'):
-        return Response({'message': 'Ошибка, токен не соответствует'}, status=status.HTTP_403_FORBIDDEN)
-    
-    application = Application.objects.get(id=id)
-    application.was = request.data.get('was')
-    application.save()
-    serializer = ApplicationSerializer(application)
-    return Response(serializer.data)
 
 
 @api_view(['DELETE'])
