@@ -30,8 +30,6 @@ urlpatterns = [
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('', include(router.urls)),
 
-    path('search/', views.get_search_appointment, name='appointments-search-list'),
-
     path('appointments/', views.get_list_appointment, name='appointments-list'),
     path('appointments/post/', views.post_list_appointment, name='appointments-post'),
     path('appointment/<int:id>/', views.detail_appointment, name='appointment-detail'),
@@ -41,7 +39,6 @@ urlpatterns = [
 
     path('applications/', views.get_list_applications, name='applications-list'),
     path('application/user/', views.get_list_user_application, name='application-user'),
-    path('applications/user/', views.get_list_applications_user, name='applications-list-user'),
     path('application/<int:id>/', views.detail_application, name='application-detail'),
     path('application/<int:id>/delete/', views.delete_application, name='application-delete'),
     path('application/<int:id>/user/put/', views.put_status_user_application, name='applications-user-put'),

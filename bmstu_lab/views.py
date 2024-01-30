@@ -102,7 +102,7 @@ def logout_view(request):
 
 
 @api_view(['GET'])
-def get_search_appointment(request, format=None):
+def get_list_appointment(request, format=None):
     """
     Возвращает список услуг по запросу
     """
@@ -112,16 +112,6 @@ def get_search_appointment(request, format=None):
         appointments = Appointment.objects.filter(date=query_date)
     else:
         appointments = Appointment.objects.all()
-    serializer = AppointmentSerializer(appointments, many=True)
-    return Response(serializer.data)
-
-
-@api_view(['GET'])
-def get_list_appointment(request, format=None):
-    """
-    Возвращает список услуг
-    """
-    appointments = Appointment.objects.all()
     serializer = AppointmentSerializer(appointments, many=True)
     return Response(serializer.data)
 
@@ -297,43 +287,9 @@ def get_list_user_application(request, format=None):
 
     else:
         return Response(status=status.HTTP_403_FORBIDDEN)
-    
-
-@api_view(['GET'])
-def get_list_applications_user(request, format=None):
-    """
-    Возвращает список всех заявок пользователя
-    """
-    ssid = request.COOKIES.get("session_id")
-
-    if ssid is not None:
-        user_id = session_storage.get(ssid)
-
-        if user_id is not None:
-            user = CustomUser.objects.get(id=user_id)
-
-            applications = Application.objects.filter(Q(id_user=user_id) & ~Q(status='Черновик') & ~Q(status='Удалена'))
-            data = [
-                {
-                    'id': application.id,
-                    'date_creating': application.date_creating,
-                    'date_formation': application.date_formation,
-                    'date_completion': application.date_completion,
-                    'status': application.status,
-                }
-                for application in applications
-            ]
-            return Response(data)
-            
-        else:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-    else:
-        return Response(status=status.HTTP_403_FORBIDDEN)
 
 
 @api_view(['GET'])
-@permission_classes([IsAdmin | IsManager])
 def get_list_applications(request, format=None):
     """
     Возвращает список всех заявок
@@ -346,12 +302,17 @@ def get_list_applications(request, format=None):
         if user_id is not None:
             user = CustomUser.objects.get(id=user_id)
 
-            applications = Application.objects.exclude(Q(status='Черновик') | Q(status='Удалён'))
+            if user.is_staff or user.is_superuser:
+                applications = Application.objects.exclude(Q(status='Черновик') | Q(status='Удалён'))
+            else:
+                applications = Application.objects.filter(Q(id_user=user_id) & ~Q(status='Черновик') & ~Q(status='Удалена'))
+
             data = [
                 {
                     'id': application.id,
                     'date_creating': application.date_creating,
                     'date_formation': application.date_formation,
+                    'date_completion': application.date_completion,
                     'status': application.status,
                     'username': application.id_user.username
                 }
