@@ -5,6 +5,7 @@ from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, UserM
 class AppApp(models.Model):
     id_appl = models.ForeignKey('Application', models.CASCADE, db_column='id_appl')
     id_appoint = models.ForeignKey('Appointment', models.CASCADE, db_column='id_appoint')
+    was = models.BooleanField(default=False, verbose_name="Был ли на приёме?")
 
     class Meta:
         managed = True
@@ -18,7 +19,6 @@ class Application(models.Model):
     date_completion = models.DateField(blank=True, null=True)
     moderator = models.CharField(max_length=50, blank=True, null=True)
     status = models.CharField(max_length=50, blank=True, null=True)
-    was = models.BooleanField(default=False, verbose_name="Был ли на приёме?")
 
     class Meta:
         managed = True
