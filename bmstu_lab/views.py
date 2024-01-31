@@ -479,10 +479,10 @@ def delete_appointment_from_application(request, id, format=None):
         return Response(status=status.HTTP_403_FORBIDDEN)
     
 
-@swagger_auto_schema(method='put', request_body=ApplicationSerializer)
+@swagger_auto_schema(method='put', request_body=AppAppSerializer)
 @permission_classes([AllowAny])
 @api_view(['PUT'])
-def put_async_was_application(request, id, format=None):
+def put_async_was_appapp(request, format=None):
     """
     Обновление поля was асинхронным сервером
     """
@@ -490,8 +490,10 @@ def put_async_was_application(request, id, format=None):
     if const_token != request.data.get('token'):
         return Response({'message': 'Ошибка, токен не соответствует'}, status=status.HTTP_403_FORBIDDEN)
     
-    application = Application.objects.get(id=id)
-    application.was = request.data.get('was')
-    application.save()
-    serializer = ApplicationSerializer(application)
+    id_appl = request.data.get('id_appl')
+    id_appoint = request.data.get('id_appoint')
+    appapp = AppApp.objects.get(id_appl=id_appl, id_appoint=id_appoint)
+    appapp.was = request.data.get('was')
+    appapp.save()
+    serializer = AppAppSerializer(appapp)
     return Response(serializer.data)
